@@ -58,7 +58,7 @@ def get_embeddings(args,model):
     bed_entries=data_generator.data_index
     if args.output_npz_file is not None:
         print("writing output file")
-         np.savez_compressed(args.output_npz_file,bed_entries=np.asarray(bed_entries),embeddings=embeddings)
+        np.savez_compressed(args.output_npz_file,bed_entries=np.asarray(bed_entries),embeddings=embeddings)
     else:
         return bed_entries,embeddings
     
