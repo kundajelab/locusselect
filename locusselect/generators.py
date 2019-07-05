@@ -4,7 +4,7 @@ import numpy as np
 import math 
 import pysam
 import threading
-
+import pdb 
 
 ltrdict = {'a':[1,0,0,0],
            'c':[0,1,0,0],
@@ -29,8 +29,8 @@ class DataGenerator(Sequence):
         self.batch_size=batch_size
         #open the reference file
         self.ref_fasta=ref_fasta
-        self.data=open_data_file(data_path)
-        self.data_index=self.data.index 
+        self.data=load_narrowPeak_file(data_path)
+        self.data_index=self.data.index.values  
         self.indices=np.arange(self.data.shape[0])
         self.center_on_summit=center_on_summit
         self.flank=flank
@@ -45,16 +45,19 @@ class DataGenerator(Sequence):
             self.ref=ref
             return self.get_batch(idx) 
 
-    def get_bed_entries(self,inds):
+    def get_bed_entries_from_inds(self,inds):
         if self.center_on_summit==False:
             #return the chrom,start, end columns from the narrowPeak file
             return self.data.index[inds]
         else:
             #get the specified flank around the peak summit
             bed_rows=self.data.iloc[inds]
+            summit_col=max(bed_rows.columns)
             bed_entries=[]
-            for index,row in bed_entries.iterrows():
-                bed_entries.append([index[0],row[-1]-self.flank,row[-1]+self.flank-1])
+            for index,row in bed_rows.iterrows():
+                bed_entries.append([index[0],
+                                    index[1]+row[summit_col]-self.flank,
+                                    index[1]+row[summit_col]+self.flank])
             return bed_entries
         
     def get_batch(self,idx):

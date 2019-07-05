@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import pdb 
 #numpy & i/o
 import warnings
 import numpy as np
@@ -42,23 +43,25 @@ def parse_args():
 def get_embeddings(args,model):
     data_generator=DataGenerator(args.input_bed_file,
                                  args.ref_fasta,
-                                 batch_size=args.btach_size,
+                                 batch_size=args.batch_size,
                                  center_on_summit=args.center_on_summit,
                                  flank=args.flank)
     print("created data generator") 
     embeddings=model.predict_generator(data_generator,
                                   max_queue_size=args.max_queue_size,
-                                  workers=args.threads,
-                                  use_multiprocessing=True,
+                                  workers=0,
+                                  use_multiprocessing=False,
                                   verbose=1)
     print("got embeddings")
-    bed_entries=embeddings.data_index
+    pdb.set_trace() 
+    bed_entries=data_generator.data_index
     embeddings_df=pd.DataFrame(data=embeddings,
                                index=bed_entries)
 
-    #store embeddings in hdf5, if provided as an argument, otherwise return the embedding dataframe 
+    #store embeddings in hdf5, if provided as an argument, otherwise return the embedding dataframe
     if args.output_hdf5 is not None:
-        embeddings_df.to_hdf(args.output_hdf5,key="data",mode='w',format='table')
+        print("writing output file") 
+        embeddings_df.to_hdf(args.output_hdf5,key="data",mode='w')
     else:
         return embeddings
     
@@ -106,10 +109,10 @@ def compute_embeddings(args):
     
     #get the original model supplied by user
     model=get_model(args)
-
+    print("loaded model") 
     #get the model that returns embedding at user-specified layer
     embedding_layer_model=get_embedding_layer_model(model,args.embedding_layer)
-
+    print("obtained embedding layer model") 
     #get the embeddings of the input narrowPeak file peaks 
     embeddings=get_embeddings(args,embedding_layer_model)
     

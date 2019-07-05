@@ -9,9 +9,9 @@ config = {
     'setup_requires': [],
     'install_requires': ['numpy>=1.9', 'keras>=2.2', 'h5py', 'pandas'],
     'scripts': [],
-    'entry_points': {'console_scripts': ['compute_embeddings = locusselect.__init__.py:main',
-                                         'compute_embedding_distances = locusselect.dist.__init__.py:main',
-                                         'visualize_embeddings =locusselect.vis.__init__.py:main']},
+    'entry_points': {'console_scripts': ['compute_embeddings = locusselect:main',
+                                         'compute_embedding_distances = locusselect.dist:main',
+                                         'visualize_embeddings =locusselect.vis:main']},
     'name': 'locusselect'
 }
 
