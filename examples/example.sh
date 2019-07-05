@@ -6,11 +6,11 @@
 #		    --ref_fasta /mnt/data/annotations/by_release/hg38/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta \
 #		    --center_on_summit \
 #		    --flank 500 \
-#		    --output_hdf5 k562_dnase_classification_embeddings.0.hdf5 \
+#		    --output_npz_file k562_dnase_classification_embeddings.0.npz \
 #		    --embedding_layer -2
 
 
-#Profile model 
+#Profile model produces an embedding of dimension (209865, 3000, 32)
 CUDA_VISIBLE_DEVICES=1 compute_embeddings \
 		    --input_bed_file optimal_peak.narrowPeak.gz \
 		    --weights 13kb_context_3b_prediction_dnase.hdf5 \
@@ -18,6 +18,6 @@ CUDA_VISIBLE_DEVICES=1 compute_embeddings \
 		    --ref_fasta /mnt/data/annotations/by_release/hg38/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta \
 		    --center_on_summit \
 		    --flank 6500 \
-		    --output_hdf5 k562_dnase_profile_embeddings.hdf5 \
+		    --output_npz_file k562_dnase_profile_embeddings_layer_-2.npz \
 		    --embedding_layer -2 \
 		    --threads 40

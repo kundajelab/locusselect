@@ -36,7 +36,7 @@ def parse_args():
     parser.add_argument('--ref_fasta')
     parser.add_argument('--flank',default=500,type=int)
     parser.add_argument('--center_on_summit',default=False,action='store_true',help="if this is set to true, the peak will be centered at the summit (must be last entry in bed file) and expanded args.flank to the left and right")
-    parser.add_argument("--output_hdf5",default=None,help="name of hdf5 file to store embeddings")
+    parser.add_argument("--output_npz_file",default=None,help="name of output file to store embeddings. The npz file will have fields \"bed_entries\" and \"embeddings\"")
     parser.add_argument("--expand_dims",default=False,action="store_true",help="set to True if using 2D convolutions, Fales if 1D convolutions (default)") 
     return parser.parse_args()
 
@@ -55,17 +55,12 @@ def get_embeddings(args,model):
                                   use_multiprocessing=True,
                                   verbose=1)
     print("got embeddings")
-    pdb.set_trace() 
     bed_entries=data_generator.data_index
-    embeddings_df=pd.DataFrame(data=embeddings,
-                               index=bed_entries)
-
-    #store embeddings in hdf5, if provided as an argument, otherwise return the embedding dataframe
-    if args.output_hdf5 is not None:
-        print("writing output file") 
-        embeddings_df.to_hdf(args.output_hdf5,key="data",mode='w')
+    if args.output_npz_file is not None:
+        print("writing output file")
+         np.savez_compressed(args.output_npz_file,bed_entries=np.asarray(bed_entries),embeddings=embeddings)
     else:
-        return embeddings
+        return bed_entries,embeddings
     
 def get_embedding_layer_model(model,embedding_layer):
     return Model(inputs=model.input,
