@@ -10,7 +10,7 @@ def parse_args():
     return parser.parse_args()
 
 def compute_embedding_distances(args):
-    data=np.load(args.embedding_npz)
+    data=np.load(args.embedding_npz,allow_pickle=True)
     regions=data['bed_entries']
     embeddings=data['embeddings']
     
