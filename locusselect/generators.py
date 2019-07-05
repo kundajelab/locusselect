@@ -24,7 +24,7 @@ def load_narrowPeak_file(data_path):
 
 #use wrappers for keras Sequence generator class to allow batch shuffling upon epoch end
 class DataGenerator(Sequence):
-    def __init__(self,data_path,ref_fasta,batch_size=128,center_on_summit=False,flank=None):
+    def __init__(self,data_path,ref_fasta,batch_size=128,center_on_summit=False,flank=None,expand_dims=False):
         self.lock = threading.Lock()        
         self.batch_size=batch_size
         #open the reference file
@@ -34,6 +34,7 @@ class DataGenerator(Sequence):
         self.indices=np.arange(self.data.shape[0])
         self.center_on_summit=center_on_summit
         self.flank=flank
+        self.expand_dims=expand_dims
         
         
     def __len__(self):
@@ -69,7 +70,8 @@ class DataGenerator(Sequence):
         #one-hot-encode the fasta sequences 
         seqs=np.array([[ltrdict.get(x,[0,0,0,0]) for x in seq] for seq in seqs])
         x_batch=seqs
-        x_batch=np.expand_dims(x_batch,1)
+        if self.expand_dims==True:
+            x_batch=np.expand_dims(x_batch,1)
         #extract the labels at the current batch of indices 
         y_batch=np.asarray(self.data.iloc[inds])
         return (x_batch,y_batch)

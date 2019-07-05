@@ -37,6 +37,7 @@ def parse_args():
     parser.add_argument('--flank',default=500,type=int)
     parser.add_argument('--center_on_summit',default=False,action='store_true',help="if this is set to true, the peak will be centered at the summit (must be last entry in bed file) and expanded args.flank to the left and right")
     parser.add_argument("--output_hdf5",default=None,help="name of hdf5 file to store embeddings")
+    parser.add_argument("--expand_dims",default=False,action="store_true",help="set to True if using 2D convolutions, Fales if 1D convolutions (default)") 
     return parser.parse_args()
 
 
@@ -45,12 +46,13 @@ def get_embeddings(args,model):
                                  args.ref_fasta,
                                  batch_size=args.batch_size,
                                  center_on_summit=args.center_on_summit,
-                                 flank=args.flank)
+                                 flank=args.flank,
+                                 expand_dims=args.expand_dims)
     print("created data generator") 
     embeddings=model.predict_generator(data_generator,
                                   max_queue_size=args.max_queue_size,
-                                  workers=0,
-                                  use_multiprocessing=False,
+                                  workers=args.threads,
+                                  use_multiprocessing=True,
                                   verbose=1)
     print("got embeddings")
     pdb.set_trace() 
