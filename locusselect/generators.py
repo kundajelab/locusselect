@@ -72,5 +72,7 @@ class DataGenerator(Sequence):
         x_batch=seqs
         if self.expand_dims==True:
             x_batch=np.expand_dims(x_batch,1)
-        return x_batch
+        indices=self.data_index[idx]
+        return x_batch,indices
+    
     
