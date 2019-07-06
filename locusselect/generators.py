@@ -72,7 +72,5 @@ class DataGenerator(Sequence):
         x_batch=seqs
         if self.expand_dims==True:
             x_batch=np.expand_dims(x_batch,1)
-        #extract the labels at the current batch of indices 
-        y_batch=np.asarray(self.data.iloc[inds])
-        return (x_batch,y_batch)
+        return x_batch
     
