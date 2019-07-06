@@ -175,11 +175,9 @@ def compute_deeplift_scores(args):
             bed_entries=np.append(bed_entries,bed_entries_batch,axis=0)
     if args.output_npz_file is not None:
         print("writing output file")
-        np.savez_compressed(args.output_npz_file,bed_entries=bed_entries,deeplift_scores=scores)
-        pool.join()
-    else:
-        pool.join()
-        return bed_entries,deeplift_scores    
+        np.savez_compressed(args.output_npz_file,bed_entries=bed_entries,deeplift_scores=deeplift_scores)
+    pool.join()
+    return bed_entries,deeplift_scores    
     
 def main():
     args=parse_args()

@@ -62,7 +62,7 @@ CUDA_VISIBLE_DEVICES=2 compute_deeplift_scores \
 		    --expand_dims \
 		    --deeplift_reference shuffled_ref \
 		    --deeplift_num_refs_per_seq 1 \
-		    --batch_size 750 \
+		    --batch_size 500 \
 		    --task_index 0 \
 		    --threads 20
 

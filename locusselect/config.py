@@ -9,10 +9,13 @@ def args_object_from_args_dict(args_dict):
     #prediction
     vars(args_object)['threads']=1
     vars(args_object)['max_queue_size']=100
-    vars(args_ojbect)['tasks']=None
+    vars(args_object)['tasks']=None
     vars(args_object)['batch_size']=1000
     vars(args_object)['flank']=500
-    vars(args_ojbect)['center_on_summit']=False 
+    vars(args_object)['center_on_summit']=False
+    vars(args_object)['yaml']=None
+    vars(args_object)['json']=None
+    vars(args_object)['output_npz_file']=None 
     for key in args_dict:
         vars(args_object)[key]=args_dict[key]
     args=args_object

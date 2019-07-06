@@ -56,11 +56,8 @@ def get_embeddings(args,model):
                                   verbose=1)
     print("got embeddings")
     bed_entries=data_generator.data_index
-    if args.output_npz_file is not None:
-        print("writing output file")
-        np.savez_compressed(args.output_npz_file,bed_entries=np.asarray(bed_entries),embeddings=embeddings)
-    else:
-        return bed_entries,embeddings
+    print("got region labels") 
+    return np.asarray(bed_entries), embeddings
     
 def get_embedding_layer_model(model,embedding_layer):
     return Model(inputs=model.input,
@@ -111,7 +108,11 @@ def compute_embeddings(args):
     embedding_layer_model=get_embedding_layer_model(model,args.embedding_layer)
     print("obtained embedding layer model") 
     #get the embeddings of the input narrowPeak file peaks 
-    embeddings=get_embeddings(args,embedding_layer_model)
+    bed_entries,embeddings=get_embeddings(args,embedding_layer_model)
+    if args.output_npz_file is not None:
+        print("writing output file")
+        np.savez_compressed(args.output_npz_file,bed_entries=bed_entries,embeddings=embeddings)
+    return bed_entries,embeddings
 
     
 def main():

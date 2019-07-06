@@ -1,6 +1,7 @@
 import argparse
 import pandas as pd
 import numpy as np 
+from locusselect.utils import *
 
 def parse_args():
     parser=argparse.ArgumentParser(description="compute pairwise distances between embeddings")
@@ -10,9 +11,7 @@ def parse_args():
     return parser.parse_args()
 
 def compute_embedding_distances(args):
-    data=np.load(args.embedding_npz,allow_pickle=True)
-    regions=data['bed_entries']
-    embeddings=data['embeddings']
+    regions,embeddings,data_type=load_embedding(args.embedding_npz)
     
 
 def main():
