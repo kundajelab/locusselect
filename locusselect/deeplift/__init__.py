@@ -42,6 +42,7 @@ def parse_args():
     parser.add_argument('--center_on_summit',default=False,action='store_true',help="if this is set to true, the peak will be centered at the summit (must be last entry in bed file) and expanded args.flank to the left and right")
     parser.add_argument("--output_npz_file",default=None,help="name of output file to store embeddings. The npz file will have fields \"bed_entries\" and \"embeddings\"")
     parser.add_argument("--expand_dims",default=False,action="store_true",help="set to True if using 2D convolutions, Fales if 1D convolutions (default)")
+    parser.add_argument("--sequential",default=True,action="store_true",help="set to True if model is sequtial (default), False if model is functional")
 
     return parser.parse_args()
 
@@ -80,7 +81,7 @@ def deeplift_shuffled_ref(X,score_func,batch_size=200,task_idx=0,num_refs_per_se
     deeplift_scores=score_func(task_idx=task_idx,input_data_sequences=X,num_refs_per_seq=num_refs_per_seq,batch_size=batch_size)
     return deeplift_scores
 
-def get_deeplift_scoring_function(model,target_layer_idx=-2,task_idx=0, num_refs_per_seq=10,reference="shuffled_ref"):
+def get_deeplift_scoring_function(model,target_layer_idx=-2,task_idx=0, num_refs_per_seq=10,reference="shuffled_ref", sequential=True):
     """
     Arguments: 
         model -- a string containing the path to the hdf5 exported model 
@@ -93,9 +94,16 @@ def get_deeplift_scoring_function(model,target_layer_idx=-2,task_idx=0, num_refs
     deeplift_model = kc.convert_model_from_saved_files(model,verbose=False)
 
     #get the deeplift score with respect to the logit 
-    score_func = deeplift_model.get_target_contribs_func(
-        find_scores_layer_idx=0,
-        target_layer_idx=target_layer_idx)
+    if(sequential):
+        score_func = deeplift_model.get_target_contribs_func(
+             find_scores_layer_idx=task_idx,
+             target_layer_idx=target_layer_idx)
+    else:
+        input_name = deeplift_model.get_input_layer_names()[0]
+        target_layer_name = list(deeplift_model.get_name_to_layer().keys())[target_layer_idx]
+        multipliers_func = deeplift_model.get_target_multipliers_func(input_name, target_layer_name)
+        score_func = deeplift.util.get_hypothetical_contribs_func_onehot(multipliers_func)
+    
     if reference=="shuffled_ref":
         from deeplift.util import get_shuffle_seq_ref_function
         from deeplift.dinuc_shuffle import dinuc_shuffle        
@@ -138,7 +146,8 @@ def compute_deeplift_scores(args):
                                              target_layer_idx=args.deeplift_layer,
                                              task_idx=args.task_index,
                                              num_refs_per_seq=args.deeplift_num_refs_per_seq,
-                                             reference=args.deeplift_reference)
+                                             reference=args.deeplift_reference,
+                                             sequential=args.sequential)
     
     #create generator to score batches of deepLIFT data
     data_generator=DataGenerator(args.input_bed_file,
