@@ -6,6 +6,6 @@ def load_embedding(fname_npz):
         embeddings=data['embeddings']
         data_type='embedding'
     else:
-        embeddings=data['deeplift']
-        data_type='deeplift'
+        embeddings=data['deeplift_scores']
+        data_type='deeplift_scores'
     return regions,embeddings,data_type

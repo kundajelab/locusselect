@@ -158,13 +158,12 @@ def compute_deeplift_scores(args):
         pool_inputs.append([batch_index,data_generator])
     pool=ThreadPool(args.threads)
     for batch in pool.imap(batch_extract, pool_inputs):
-
         X=batch[0]
         bed_entries_batch=batch[1]
         batch_id=batch[2]
         print(batch_id) 
         processed.append(batch_id)
-        if len(processed)==len_data_generator:
+        if len(processed)==(len_data_generator+1):
             break 
         batch_deeplift_scores=deeplift_batch(score_func,X,args.task_index,args.deeplift_num_refs_per_seq,args.deeplift_reference,args.batch_size)
         if deeplift_scores is None:
