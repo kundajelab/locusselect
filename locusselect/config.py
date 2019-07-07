@@ -15,7 +15,8 @@ def args_object_from_args_dict(args_dict):
     vars(args_object)['center_on_summit']=False
     vars(args_object)['yaml']=None
     vars(args_object)['json']=None
-    vars(args_object)['output_npz_file']=None 
+    vars(args_object)['output_npz_file']=None
+    vars(args_object)['sequential']=True
     for key in args_dict:
         vars(args_object)[key]=args_dict[key]
     args=args_object
