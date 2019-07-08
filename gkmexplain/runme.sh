@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-#clone and install github.com/kundajelab/lsgkm for gkmexplain
-# in present dir
+#clone and install github.com/kundajelab/lsgkm in present dir for gkmexplain
 
 for idx in 0 1 2 3 4 5
 do
