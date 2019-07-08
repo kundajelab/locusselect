@@ -8,5 +8,10 @@ in the PrepareData.ipynb notebook:
             chrom, start, end = coord
             chrom = chrom.decode("utf-8")
             start = start-1
-            outfile.write(chrom+"\t"+str(start)+"\t"+str(end)+"\n")
+            #when anna expands, it's flanksize, center, flank-1
+            #so we should give her code a summit location of
+            assert (end-start)%2 == 0
+            flanksize = int((end-start)/2)
+            outfile.write(chrom+"\t"+str(start)+"\t"+str(end)
+                          +"\t.\t.\t.\t.\t.\t.\t"+str(flanksize)+"\n")
         outfile.close()
