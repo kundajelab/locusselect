@@ -8,7 +8,7 @@ CUDA_VISIBLE_DEVICES=1 compute_embeddings \
 		    --flank 500 \
 		    --output_npz_file k562_dnase_classification_embeddings.0.-3.npz \
 		    --embedding_layer -3 \
-		    --expand_dims k\
+		    --expand_dims \
                    --threads 40 
 
 
@@ -38,7 +38,7 @@ CUDA_VISIBLE_DEVICES=1 compute_embeddings \
 		    --threads 40
 
 #Profile model produces an embedding of dimension (209865,3000,1) for layer -1 
-CUDA_VISIBLE_DEVICES=2 compute_embeddings \
+CUDA_VISIBLE_DEVICES=1 compute_embeddings \
 		    --input_bed_file optimal_peak.narrowPeak.gz \
 		    --weights 13kb_context_3b_prediction_dnase.hdf5 \
 		    --json k562_dnase_profile_arch.json \
@@ -51,7 +51,7 @@ CUDA_VISIBLE_DEVICES=2 compute_embeddings \
 
 
 # DeepLIFT scores for classification model
-CUDA_VISIBLE_DEVICES=2 compute_deeplift_scores \
+CUDA_VISIBLE_DEVICES=1 compute_deeplift_scores \
 		    --input_bed_file /srv/scratch/annashch/deeplearning/encode4crispr/k562_dnase/optimal_peak.narrowPeak.gz \
 		    --model_hdf5 /srv/scratch/annashch/deeplearning/encode4crispr/k562_dnase/classification_init_dan_model/DNASE.K562.classification.SummitWithin200bpCenter.0 \
 		    --ref_fasta /mnt/data/annotations/by_release/hg38/GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta \
