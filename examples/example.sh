@@ -8,7 +8,7 @@ CUDA_VISIBLE_DEVICES=1 compute_embeddings \
 		    --flank 500 \
 		    --output_npz_file k562_dnase_classification_embeddings.0.-3.npz \
 		    --embedding_layer -3 \
-		    --expand_dims k\
+		    --expand_dims \
                    --threads 40 
 
 
