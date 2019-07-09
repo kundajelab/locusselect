@@ -2,11 +2,81 @@ import itertools
 import numpy as np
 import tensorflow as tf 
 import pdb
+from locusselect.utils import *
+
+def run_function_in_batches(func,
+                            input_data_list,
+                            learning_phase=None,
+                            batch_size=10,
+                            progress_update=1000,
+                            multimodal_output=False):
+    #func has a return value such that the first index is the
+    #batch. This function will run func in batches on the inputData
+    #and will extend the result into one big list.
+    #if multimodal_output=True, func has a return value such that first
+    #index is the mode and second index is the batch
+    assert isinstance(input_data_list, list), "input_data_list must be a list"
+    #input_datas is an array of the different input_data modes.
+    to_return = [];
+    i = 0;
+    while i < len(input_data_list[0]):
+        if (progress_update is not None):
+            if (i%progress_update == 0):
+                print("Done",i)
+        func_output = func(([x[i:i+batch_size] for x in input_data_list]
+                                +([] if learning_phase is
+                                   None else [learning_phase])
+                        ))
+        if (multimodal_output):
+            assert isinstance(func_output, list),\
+             "multimodal_output=True yet function return value is not a list"
+            if (len(to_return)==0):
+                to_return = [[] for x in func_output]
+            for to_extend, batch_results in zip(to_return, func_output):
+                to_extend.extend(batch_results)
+        else:
+            to_return.extend(func_output)
+        i += batch_size
+    return to_return
+
+def get_session():
+    try:
+        #use the keras session if there is one
+        import keras.backend as K
+        return K.get_session()
+    except:
+        #Warning: I haven't really tested this behaviour out...
+        global _SESS 
+        if _SESS is None:
+            print("MAKING A SESSION")
+            _SESS = tf.Session()
+            _SESS.run(tf.global_variables_initializer()) 
+        return _SESS
+
+def compile_func(inputs, outputs):
+    if (isinstance(inputs, list)==False):
+        print("Wrapping the inputs in a list...")
+        inputs = [inputs]
+    assert isinstance(inputs, list)
+    def func_to_return(inp):
+        if len(inp) > len(inputs) and len(inputs)==1:
+            print("Wrapping the inputs in a list...")
+            inp = [inp]
+        assert len(inp)==len(inputs),\
+            ("length of provided list should be "
+             +str(len(inputs))+" for tensors "+str(inputs)
+             +" but got input of length "+str(len(inp)))
+        feed_dict = {}
+        for input_tensor, input_val in zip(inputs, inp):
+            feed_dict[input_tensor] = input_val 
+        sess = get_session()
+        return sess.run(outputs, feed_dict=feed_dict)  
+    return func_to_return
 
 def get_gapped_kmer_embedding_func(filters, biases):
     '''
     Sourced from Avanti Shrikumar's MoDISCO repository: 
-    https://github.com/kundajelab/tfmodisco/blob/d0827088f3718b477414a6042ec348e18d8ab09b/modisco/affinitymat/core.py#L127
+    https://github.com/kundajelab/tfmodisco/blob/d0827088f3718b477414a6042ec348e18d8ab09b/modisco/backend/tensorflow_backend.py#L81
     '''
     
     #filters should be: out_channels, rows, ACGT
@@ -89,14 +159,24 @@ def generate_gapped_kmers(kmer_len,
     return np.array(filters), np.array(biases)
 
 def main():
-    kmer_len=3
+    kmer_len=6
     num_gaps=1
     filters, biases=generate_gapped_kmers(kmer_len,
                                           num_gaps,
                                           alphabet_size=4)    
-    pdb.set_trace() 
     embed_func=get_gapped_kmer_embedding_func(filters,biases)
-    pdb.set_trace()
+    #deeplift_score_data=load_embedding("/mnt/lab_data2/annashch/locusselect/examples/k562_dnase_regression_0.deeplift.npz")
+    #deeplift_regions=deeplift_score_data[0]
+    #deeplift_scores=deeplift_score_data[1]
+    #kmer_embeddings=embed_func(to_embed=deeplift_score_data,batch_size=1000,progress_update=True)
+    impscores_filename="coordinates_0.K562_m1_r1.model.explanation.txt"
+    impscores = [np.array( [[float(z) for z in y.split(",")]
+                       for y in x.rstrip().split("\t")[2].split(";")])
+                 for x in open(impscores_filename)]
+    one_hot=1.0*(np.abs(impscores)>0)
+    kmer_embeddings=embed_func(one_hot,impscores,batch_size=100,progress_update=True)
+    np.savetxt("gkmexplain.coord.embeddings.txt",kmer_embeddings)
+
     
 if __name__=="__main__":
     main()

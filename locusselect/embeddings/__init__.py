@@ -145,7 +145,9 @@ def get_model(args):
         from keras.models import load_model
         model=load_model(args.model_hdf5,custom_objects=custom_objects)
     print("got model architecture")
-    print("loaded model weights")        
+    print("loaded model weights")
+    print(model.summary())
+    
     return model
 
 
