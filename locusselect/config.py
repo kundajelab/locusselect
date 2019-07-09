@@ -19,7 +19,9 @@ def args_object_from_args_dict(args_dict):
     vars(args_object)['sequential']=True
     vars(args_object)['global_pool_on_position']=False
     vars(args_object)['non_global_pool_on_position_size']=None
-    vars(args_object)['non_global_pool_on_positin_stride']=None 
+    vars(args_object)['non_global_pool_on_positin_stride']=None
+    vars(args_object)['alphabet_size']=4
+    vars(args_object)['outf']=None
     for key in args_dict:
         vars(args_object)[key]=args_dict[key]
     args=args_object

@@ -1,9 +1,23 @@
 import itertools
+import argparse 
 import numpy as np
 import tensorflow as tf 
 import pdb
-from locusselect.utils import *
 
+#import dependencies for locusselect 
+from locusselect.utils import *
+from locusselect.config import args_object_from_args_dict
+
+def parse_args():
+    parser=argparse.ArgumentParser(description="compute gapped kmer embeddings")
+    parser.add_argument("--importance_score_files",nargs="+")
+    parser.add_argument("--kmer_len",type=int,help="length of kmer")
+    parser.add_argument("--num_gaps",type=int,help="number of allowed gaps in the kmer")
+    parser.add_argument("--alphabet_size",type=int,default=4)
+    parser.add_argument("--outf",nargs="*",default=None)
+    parser.add_argument("--batch_size",type=int,default=1000)
+    return parser.parse_args() 
+    
 def run_function_in_batches(func,
                             input_data_list,
                             learning_phase=None,
@@ -158,25 +172,61 @@ def generate_gapped_kmers(kmer_len,
                 
     return np.array(filters), np.array(biases)
 
-def main():
-    kmer_len=6
-    num_gaps=1
+
+def compute_gapped_kmer_embedding_wrapper(args):
+    if type(args)==type({}):
+        args=args_object_from_args_dict(args) 
+    kmer_len=args.kmer_len
+    num_gaps=args.num_gaps
+    alphabet_size=args.alphabet_size
+    imp_score_files=args.importance_score_files
+    outf_files=args.outf
+    batch_size=args.batch_size
+    compute_gapped_kmer_embedding(kmer_len,num_gaps,alphabet_size,imp_score_files,outf_files,batch_size=batch_size,progress_update=True)
+    
+def compute_gapped_kmer_embedding(kmer_len,
+                                  num_gaps,
+                                  alphabet_size,
+                                  imp_score_files,
+                                  outf=None,
+                                  batch_size=100,
+                                  progress_update=True):
     filters, biases=generate_gapped_kmers(kmer_len,
                                           num_gaps,
-                                          alphabet_size=4)    
+                                          alphabet_size=4)
+    print("generated gapped kmers") 
     embed_func=get_gapped_kmer_embedding_func(filters,biases)
-    #deeplift_score_data=load_embedding("/mnt/lab_data2/annashch/locusselect/examples/k562_dnase_regression_0.deeplift.npz")
-    #deeplift_regions=deeplift_score_data[0]
-    #deeplift_scores=deeplift_score_data[1]
-    #kmer_embeddings=embed_func(to_embed=deeplift_score_data,batch_size=1000,progress_update=True)
-    impscores_filename="coordinates_0.K562_m1_r1.model.explanation.txt"
-    impscores = [np.array( [[float(z) for z in y.split(",")]
-                       for y in x.rstrip().split("\t")[2].split(";")])
-                 for x in open(impscores_filename)]
-    one_hot=1.0*(np.abs(impscores)>0)
-    kmer_embeddings=embed_func(one_hot,impscores,batch_size=100,progress_update=True)
-    np.savetxt("gkmexplain.coord.embeddings.txt",kmer_embeddings)
-
+    print("got gapped kmer embedding function")
+    outputs=[] 
+    for i in range(len(imp_score_files)):
+        #get the current importance score file name 
+        impscore_filename=imp_score_files[i]
+        impscores = np.array([np.array( [[float(z) for z in y.split(",")]
+                                for y in x.rstrip().split("\t")[2].split(";")])
+                     for x in open(impscore_filename)])
+        one_hot=1.0*(np.abs(impscores)>0)
+        kmer_embeddings=embed_func(one_hot,impscores,batch_size=batch_size,progress_update=True)
+        try:
+            kmer_embeddings_rev=embed_func(one_hot[:,::-1,::-1],impscores[:,::-1,::-1],batch_size=batch_size,progress_update=True)
+        except:
+            pdb.set_trace() 
+        summed_kmer_embeddings=kmer_embeddings+kmer_embeddings_rev        
+        if outf is not None:
+            cur_output_file=outf[i]
+            print("writing gzip-compressed output file:"+cur_output_file)
+            np.savez_compressed(cur_output_file,embeddings=summed_kmer_embeddings)
+        else:
+            outputs.append(summed_kmer_embeddings)
+            
+    #if no output file was provided, return the embeddings as numpy matrices. 
+    if outf is None:
+        return outputs 
+    else:
+        return 
+    
+def main():
+    args=parse_args()
+    compute_gapped_kmer_embedding_wrapper(args)
     
 if __name__=="__main__":
     main()
