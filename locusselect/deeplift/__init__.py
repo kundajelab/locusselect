@@ -124,6 +124,8 @@ def deeplift_batch(score_func,X,task_idx,num_refs_per_seq,reference,batch_size):
     else:
         raise Exception("supported DeepLIFT references are 'shuffled_ref','gc_ref', 'zero_ref'")
     print("done with batch")
+    #Project onto the base that's actually present
+    deeplift_scores_batch = np.sum(deeplift_scores_batch, axis=-1)[:,:,:,None]*X
     return deeplift_scores_batch
 
 def batch_extract(inputs):
