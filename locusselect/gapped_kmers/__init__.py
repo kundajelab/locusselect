@@ -172,6 +172,31 @@ def generate_gapped_kmers(kmer_len,
                 
     return np.array(filters), np.array(biases)
 
+    
+def core_compute_gapped_kmer_embedding(kmer_len,
+                                       num_gaps,
+                                       alphabet_size,
+                                       imp_scores,
+                                       rc=True,
+                                       onehot=None,
+                                       batch_size=100,
+                                       progress_update=True):
+    filters, biases=generate_gapped_kmers(kmer_len,
+                                          num_gaps,
+                                          alphabet_size=4)
+    print("generated gapped kmers") 
+    embed_func=get_gapped_kmer_embedding_func(filters,biases)
+    print("got gapped kmer embedding function")
+    if (onehot) is None:
+        onehot = 1.0*(np.abs(impscores)>0)
+    kmer_embeddings=embed_func(one_hot,impscores,batch_size=batch_size,progress_update=True)
+    if (rc):
+        kmer_embeddings_rev=embed_func(one_hot[:,::-1,::-1],impscores[:,::-1,::-1],batch_size=batch_size,progress_update=True)
+        summed_kmer_embeddings=kmer_embeddings+kmer_embeddings_rev        
+        return summed_kmer_embeddings
+    else:
+        return kmer_embeddings
+
 
 def compute_gapped_kmer_embedding_wrapper(args):
     if type(args)==type({}):
