@@ -4,7 +4,7 @@ config = {
     'include_package_data': True,
     'description': 'Compute deep learning embeddings for narrowPeak files; compute pairwise distance between embeddings and cluster with tSNE',
     'download_url': 'https://github.com/kundajelab/locusselect',
-    'version': '0.2',
+    'version': '0.3',
     'packages': ['locusselect'],
     'setup_requires': [],
     'install_requires': ['numpy>=1.9', 'keras>=2.2', 'h5py', 'pandas','deeplift'],
