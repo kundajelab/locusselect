@@ -1,5 +1,5 @@
 These coordinates were obtained by running the following code
-in the PrepareData.ipynb notebook. Genome is hg19:
+in Gurkan's PrepareData.ipynb notebook. Genome is hg19:
 
     #write bed list to file
     for idx,bedlist in enumerate(avocado_bed_list):
