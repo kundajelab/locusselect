@@ -8,7 +8,7 @@ def get_preact_function(model,target_layer_idx):
                            outputs=model.layers[target_layer_idx].output)
         return preact_model.predict
 
-def in_silico_mutagenesis(model, X, task_index,target_layer_idx=-2):
+def in_silico_mutagenesis(model, X, task_index,target_layer_idx=-2,start_pos=None,end_pos=None):
     """
     Parameters                               
     ----------                                
@@ -26,9 +26,14 @@ def in_silico_mutagenesis(model, X, task_index,target_layer_idx=-2):
     
     #Initialize mutants array to the same shape                                     
     output_dim=wild_type_logits.shape+X.shape[2:4]
-    wt_expanded=np.empty(output_dim)
-    mutants_expanded=np.empty(output_dim)
+    wt_expanded=np.zeros(output_dim)
+    mutants_expanded=np.zeros(output_dim)
     empty_onehot=np.zeros(output_dim[3])
+    if start_pos is None:
+        start_pos=0
+    if end_pos is None:
+        end_pos=output_dim[2] 
+
     #3. Iterate through all tasks, positions
     for sample_index in range(output_dim[0]):
         print("ISM: task:"+str(task_index)+" sample:"+str(sample_index))
@@ -37,7 +42,7 @@ def in_silico_mutagenesis(model, X, task_index,target_layer_idx=-2):
         wt_expanded[sample_index]=np.tile(wt_logit_for_task_sample,(output_dim[2],output_dim[3]))
         #mutagenize each position
 
-        for base_pos in range(output_dim[2]):
+        for base_pos in range(start_pos,end_pos):
             #for each position, iterate through the 4 bases
             for base_letter in range(output_dim[3]):
                 cur_base=np.array(empty_onehot)
