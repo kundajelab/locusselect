@@ -17,24 +17,31 @@ ltrdict = {'a':[1,0,0,0],
            'T':[0,0,0,1],
            'N':[0,0,0,0]}
 
-def load_narrowPeak_file(data_path):
-    data=pd.read_csv(data_path,header=None,sep='\t',index_col=[0,1,2])
-    return data 
+def load_narrowPeak_file(data_path,start_row,num_rows):
 
+    data=pd.read_csv(data_path,header=None,sep='\t',index_col=[0,1,2])
+    if num_rows is None:
+        return data
+    else:
+        end_row=min(start_row+num_rows,data.shape[0])
+        data=data.iloc[start_row:end_row]
+        return data
 
 #use wrappers for keras Sequence generator class to allow batch shuffling upon epoch end
 class DataGenerator(Sequence):
-    def __init__(self,data_path,ref_fasta,batch_size=128,center_on_summit=False,flank=None,expand_dims=False):
+    def __init__(self,data_path,ref_fasta,batch_size=128,center_on_summit=False,flank=None,expand_dims=False,start_row=0,num_rows=None):
         self.lock = threading.Lock()        
         self.batch_size=batch_size
         #open the reference file
         self.ref_fasta=ref_fasta
-        self.data=load_narrowPeak_file(data_path)
+        self.data=load_narrowPeak_file(data_path,start_row,num_rows)
         self.data_index=self.data.index.values  
         self.indices=np.arange(self.data.shape[0])
         self.center_on_summit=center_on_summit
         self.flank=flank
         self.expand_dims=expand_dims
+        self.start_row=start_row
+        self.num_rows=num_rows
         
         
     def __len__(self):

@@ -43,6 +43,8 @@ def parse_args():
     parser.add_argument("--global_pool_on_position",default=False,action="store_true")
     parser.add_argument("--non_global_pool_on_position_size",type=int,default=None)
     parser.add_argument("--non_global_pool_on_position_stride",type=int,default=None) 
+    parser.add_argument("--start_row",type=int,default=0)
+    parser.add_argument("--num_rows",type=int,default=None)
     return parser.parse_args()
 
 
@@ -53,17 +55,41 @@ def get_embeddings(args,model):
                                  center_on_summit=args.center_on_summit,
                                  flank=args.flank,
                                  expand_dims=args.expand_dims)
-    print("created data generator") 
-    embeddings=model.predict_generator(data_generator,
-                                  max_queue_size=args.max_queue_size,
-                                  workers=args.threads,
-                                  use_multiprocessing=True,
-                                  verbose=1)
+    data_length=len(data_generator)*args.batch_size
+    done=False
+    start_row=0
+    num_rows=args.num_rows
+    embeddings=None
+    while True:
+        data_subgenerator=DataGenerator(args.input_bed_file,
+                                     args.ref_fasta,
+                                     batch_size=args.batch_size,
+                                     center_on_summit=args.center_on_summit,
+                                     flank=args.flank,
+                                     expand_dims=args.expand_dims,
+                                     start_row=start_row,
+                                     num_rows=num_rows)
+
+        print("created data generator from {}".format(start_row))
+        e=model.predict_generator(data_subgenerator,
+                                      max_queue_size=args.max_queue_size,
+                                      workers=args.threads,
+                                      use_multiprocessing=True,
+                                      verbose=1)
+        if(embeddings is None):
+            embeddings = e
+        else:
+            embeddings = np.vstack((embeddings, e))
+        start_row+=num_rows
+        if start_row>=data_length:
+            break
+
     print("got embeddings")
     bed_entries=data_generator.data_index
-    print("got region labels") 
+    print("got region labels")
     return np.asarray(bed_entries), embeddings
-    
+   
+
 def get_embedding_layer_model(model,embedding_layer):
     '''
     if input_seq_len is provided the model with use the central n base pairs of the input sequence as 
