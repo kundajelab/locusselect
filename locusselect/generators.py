@@ -29,7 +29,7 @@ def load_narrowPeak_file(data_path,start_row,num_rows):
 
 #use wrappers for keras Sequence generator class to allow batch shuffling upon epoch end
 class DataGenerator(Sequence):
-    def __init__(self,data_path,ref_fasta,batch_size=128,center_on_summit=False,flank=None,expand_dims=False,start_row=0,num_rows=None):
+    def __init__(self,data_path,ref_fasta,batch_size=128,center_on_summit=False,center_on_bed_interval=False,flank=None,expand_dims=False,start_row=0,num_rows=None):
         self.lock = threading.Lock()        
         self.batch_size=batch_size
         #open the reference file
@@ -38,6 +38,7 @@ class DataGenerator(Sequence):
         self.data_index=self.data.index.values  
         self.indices=np.arange(self.data.shape[0])
         self.center_on_summit=center_on_summit
+        self.center_on_bed_interval=center_on_bed_interval
         self.flank=flank
         self.expand_dims=expand_dims
         self.start_row=start_row
@@ -53,11 +54,9 @@ class DataGenerator(Sequence):
             self.ref=ref
             return self.get_batch(idx) 
 
-    def get_bed_entries_from_inds(self,inds):
-        if self.center_on_summit==False:
-            #return the chrom,start, end columns from the narrowPeak file
-            return self.data.index[inds]
-        else:
+    def get_bed_entries_from_inds(self,inds):        
+        if self.center_on_summit is True:
+            assert self.center_on_peak_interval == False 
             #get the specified flank around the peak summit
             bed_rows=self.data.iloc[inds]
             summit_col=max(bed_rows.columns)
@@ -65,9 +64,22 @@ class DataGenerator(Sequence):
             for index,row in bed_rows.iterrows():
                 bed_entries.append([index[0],
                                     index[1]+row[summit_col]-self.flank,
-                                    index[1]+row[summit_col]+self.flank])
+                                    index[1]+row[summit_col]+self.flank])  
+        elif self.center_on_bed_interval is True:
+            assert self.center_on_summit == False
+            #get the specified flank around the peak center
+            bed_rows=self.data.iloc[inds]
+            bed_entries=[]
+            for index,row in bed_rows.iterrows():
+                peak_center=int(math.floor(0.5*(index[1]+index[2])))
+                bed_entries.append([index[0],
+                                    peak_center-self.flank,
+                                    peak_center+self.flank])            
             return bed_entries
-        
+        else:
+            #return the chrom,start, end columns from the narrowPeak file
+            return self.data.index[inds]
+                
     def get_batch(self,idx):
         #get seq positions
         inds=self.indices[idx*self.batch_size:(idx+1)*self.batch_size]

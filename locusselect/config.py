@@ -13,6 +13,7 @@ def args_object_from_args_dict(args_dict):
     vars(args_object)['batch_size']=1000
     vars(args_object)['flank']=500
     vars(args_object)['center_on_summit']=False
+    vars(args_object)['center_on_bed_interval']=False
     vars(args_object)['yaml']=None
     vars(args_object)['json']=None
     vars(args_object)['output_npz_file']=None
@@ -22,6 +23,7 @@ def args_object_from_args_dict(args_dict):
     vars(args_object)['non_global_pool_on_positin_stride']=None
     vars(args_object)['alphabet_size']=4
     vars(args_object)['outf']=None
+    vars(args_object)['num_rows']=1000
     for key in args_dict:
         vars(args_object)[key]=args_dict[key]
     args=args_object
