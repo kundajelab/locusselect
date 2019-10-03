@@ -33,6 +33,19 @@ def recall(y, z):
     tp, tn, fp, fn = contingency_table(y, z)
     return tp / (tp + fn+pseudocount)
 
+def tpr(y, z):
+    """
+    True positive rate `tp / (tp + fn)`
+    """
+    tp, tn, fp, fn = contingency_table(y, z)
+    return tp / (tp + fn)
+
+def tnr(y, z):
+    """
+    True negative rate `tn / (tn + fp)`
+    """
+    tp, tn, fp, fn = contingency_table(y, z)
+    return tn / (tn + fp)
 
 def specificity(y, z):
     """True negative rate `tn / (tn + fp)`
@@ -75,9 +88,4 @@ def f1(y, z):
     _recall = recall(y, z)
     _prec = precision(y, z)
     return 2 * (_prec * _recall) / (_prec + _recall+pseudocount)
-
-
-def spearman_corr(y_true,y_pred):
-    import K.contribs.metrics.streaming_pearson_correlation
-    return K.contribs.metrics.streaming_pearson_correlation(y_pred,y_true)
 

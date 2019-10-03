@@ -24,6 +24,7 @@ def args_object_from_args_dict(args_dict):
     vars(args_object)['alphabet_size']=4
     vars(args_object)['outf']=None
     vars(args_object)['num_rows']=1000
+    vars(args_object)['input_grad']=False
     for key in args_dict:
         vars(args_object)[key]=args_dict[key]
     args=args_object
