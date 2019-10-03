@@ -218,7 +218,7 @@ def compute_interpretation_scores(args):
             bed_entries=np.append(bed_entries,bed_entries_batch,axis=0)
     if args.output_npz_file is not None:
         print("writing output file")
-        np.savez_compressed(args.output_npz_file,bed_entries=bed_entries,deeplift_scores=scores)
+        np.savez_compressed(args.output_npz_file,bed_entries=bed_entries,interp_scores=scores)
     pool.close() 
     pool.join()
     return bed_entries,scores    
