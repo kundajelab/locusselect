@@ -111,7 +111,10 @@ def get_embedding_layer_model(model,embedding_layer_number,embedding_input_numbe
                      outputs=model.layers[embedding_layer_number].output)
 
 def add_positional_pooling(model,args):
-    target_layer=model._layers[args.embedding_layer]
+    if args.embedding_layer_name is not None:
+        target_layer=model.get_layer(args.embedding_layer_name)
+    else: 
+        target_layer=model._layers[args.embedding_layer_number]
     if (target_layer.__class__.__name__.startswith("Conv")==False):
         #We only want to change the input shape for a conv layer 
         return model
@@ -136,11 +139,19 @@ def add_positional_pooling(model,args):
 
 def reshape_model_inputs(model,new_input_shape,args):
     #we don't want to reshape the model if we are getting the embedding from a fully connected layer
-    target_layer=model._layers[args.embedding_layer]
+    if args.embedding_layer_name is not None:
+        target_layer=model.get_layer(args.embedding_layer_name)
+    else: 
+        target_layer=model._layers[args.embedding_layer_number]
     if (target_layer.__class__.__name__.startswith("Conv")==False):
         #We only want to change the input shape for a conv layer 
-        return model 
-    model._layers[1].batch_input_shape = new_input_shape
+        return model
+    if args.embedding_input_name is not None:
+        model.get_layer(args.embedding_input_name).batch_input_shape=new_input_shape
+    elif args.embedding_input_number is not None:
+        model._layers[args.embedding_input_number].batch_input_shape=new_input_shape
+    else:
+        model._layers[0].batch_input_shape = new_input_shape        
     new_model=keras.models.model_from_json(model.to_json())
     for layer in new_model.layers:
         try:
