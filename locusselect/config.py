@@ -25,6 +25,11 @@ def args_object_from_args_dict(args_dict):
     vars(args_object)['outf']=None
     vars(args_object)['num_rows']=1000
     vars(args_object)['input_grad']=False
+    vars(args_object)['embedding_layer_number']=None
+    vars(args_object)['embedding_layer_name']=None
+    vars(args_object)['embedding_input_number']=None
+    vars(args_object)['embedding_input_name']=None
+        
     for key in args_dict:
         vars(args_object)[key]=args_dict[key]
     args=args_object
