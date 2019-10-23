@@ -37,6 +37,8 @@ def parse_args():
     parser.add_argument("--deeplift_num_refs_per_seq",type=int,default=10,help="number of reference sequences to use for each sequence to be deepLIFTed") 
     parser.add_argument("--task_index",type=int,default=0,help="If the model is multi-tasked, select the index of the task to compute deeplift scores for; use 0 for single-tasked models")
     parser.add_argument('--input_bed_file',required=True,help='bed file with peaks')
+    parser.add_argument('--preparsed_inputs',nargs="+",required=False,default=None,help='prepared inputs')
+    parser.add_argument('--input_index_to_interpret',type=int,default=None)
     parser.add_argument('--batch_size',type=int,help='batch size to use to compute deepLIFT scores',default=1000)
     parser.add_argument('--ref_fasta')
     parser.add_argument('--flank',default=500,type=int)
@@ -45,7 +47,6 @@ def parse_args():
     parser.add_argument("--output_npz_file",default=None,help="name of output file to store the deepLIFT scores. The npz file will have fields \"bed_entries\" and \"deeplift scores\"")
     parser.add_argument("--expand_dims",default=False,action="store_true",help="set to True if using 2D convolutions, Fales if 1D convolutions (default)")
     parser.add_argument("--sequential",default=True,action="store_true",help="set to True if model is sequtial (default), False if model is functional")
-
     return parser.parse_args()
 
 import deeplift
@@ -54,11 +55,11 @@ import numpy as np
 #Careful! Gradientxinput is summed across tasks, there is no support in tensorflow for calculating the per-task gradient
 #(see thread here: https://github.com/tensorflow/tensorflow/issues/4897) 
 
-def input_grad(model,X,target_layer_idx=-2):
+def input_grad(model,X,target_layer_idx=-2,input_to_use=0):
     print("WARNING: this function provides aggregated gradients across tasks. Not recommended for multi-tasked models")
     from keras import backend as K 
-    fn = K.function([model.input], K.gradients(model.layers[target_layer_idx].output, [model.input]))
-    return fn([X])[0]
+    fn = K.function(model.inputs, K.gradients(model.layers[target_layer_idx].output, model.inputs))    
+    return fn(X)[input_to_use]
 
 def deeplift_zero_ref(X,score_func,batch_size=200,task_idx=0):        
     # use a 40% GC reference
@@ -207,7 +208,7 @@ def compute_interpretation_scores(args):
         if len(processed)==(len_data_generator+1):
             break
         if args.input_grad is True:
-            batch_scores=input_grad(model,X,target_layer_idx=args.interpretation_layer)
+            batch_scores=input_grad(model,X,target_layer_idx=args.interpretation_layer,input_to_use=input_index_to_interpret)
         else:
             batch_scores=deeplift_batch(score_func,X,args.task_index,args.deeplift_num_refs_per_seq,args.deeplift_reference,args.batch_size)
         if scores is None:
