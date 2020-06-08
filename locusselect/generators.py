@@ -90,8 +90,17 @@ class DataGenerator(Sequence):
         bed_entries=self.get_bed_entries_from_inds(inds)
         #get sequences
         seqs=[self.ref.fetch(i[0],i[1],i[2]) for i in bed_entries]
+        corrected_seqs=[]
+        for seq in seqs:
+            try:
+                if len(seq)<2*self.flank:
+                    delta=2*self.flank-len(seq)
+                    seq=seq+"N"*delta
+            except:
+                seq="N"*2*self.flank
+            corrected_seqs.append(seq)
         #one-hot-encode the fasta sequences 
-        seqs=np.array([[ltrdict.get(x,[0,0,0,0]) for x in seq] for seq in seqs])
+        seqs=np.array([[ltrdict.get(x,[0,0,0,0]) for x in seq] for seq in corrected_seqs])
         x_batch=seqs
         if self.expand_dims==True:
             x_batch=np.expand_dims(x_batch,1)
