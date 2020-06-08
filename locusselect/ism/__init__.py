@@ -8,7 +8,7 @@ def get_preact_function(model,target_layer_idx):
                            outputs=model.layers[target_layer_idx].output)
         return preact_model.predict
 
-def in_silico_mutagenesis(model, X, task_index,target_layer_idx=-2,start_pos=None,end_pos=None):
+def in_silico_mutagenesis(model, X, task_index,target_layer_idx=-2,output_index=0,start_pos=None,end_pos=None):
     """
     Parameters                               
     ----------                                

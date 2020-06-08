@@ -56,15 +56,18 @@ class DataGenerator(Sequence):
 
     def get_bed_entries_from_inds(self,inds):        
         if self.center_on_summit is True:
-            assert self.center_on_peak_interval == False 
+            assert self.center_on_bed_interval == False 
             #get the specified flank around the peak summit
             bed_rows=self.data.iloc[inds]
             summit_col=max(bed_rows.columns)
             bed_entries=[]
             for index,row in bed_rows.iterrows():
-                bed_entries.append([index[0],
-                                    index[1]+row[summit_col]-self.flank,
-                                    index[1]+row[summit_col]+self.flank])  
+                start_pos=max([0,index[1]+row[summit_col]-self.flank])
+                end_pos=max([2*self.flank,index[1]+row[summit_col]+self.flank])
+                chrom=index[0] 
+                bed_entries.append([chrom,start_pos,end_pos])
+            return bed_entries
+        
         elif self.center_on_bed_interval is True:
             assert self.center_on_summit == False
             #get the specified flank around the peak center
@@ -72,9 +75,10 @@ class DataGenerator(Sequence):
             bed_entries=[]
             for index,row in bed_rows.iterrows():
                 peak_center=int(math.floor(0.5*(index[1]+index[2])))
-                bed_entries.append([index[0],
-                                    peak_center-self.flank,
-                                    peak_center+self.flank])            
+                chrom=index[0]
+                start_pos=max([0,peak_center-self.flank])
+                end_pos=max([2*self.flank,peak_center+self.flank])
+                bed_entries.append([chrom,start_pos,end_pos])
             return bed_entries
         else:
             #return the chrom,start, end columns from the narrowPeak file

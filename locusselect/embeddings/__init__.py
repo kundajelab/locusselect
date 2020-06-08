@@ -162,7 +162,8 @@ def reshape_model_inputs(model,new_input_shape,args):
 
     
 
-def get_model(args):    
+def get_model(args):
+    from keras.utils.generic_utils import get_custom_objects
     custom_objects={"recall":recall,
                     "sensitivity":recall,
                     "specificity":specificity,
@@ -171,12 +172,14 @@ def get_model(args):
                     "precision":precision,
                     "f1":f1,
                     "ambig_binary_crossentropy":ambig_binary_crossentropy,
-                    "ambig_mean_squared_error":ambig_mean_squared_error}
+                    "ambig_mean_squared_error":ambig_mean_squared_error,
+                    "MultichannelMultinomialNLL":MultichannelMultinomialNLL}
+    get_custom_objects().update(custom_objects)
     if args.yaml!=None:
         from keras.models import model_from_yaml
         #load the model architecture from yaml
         yaml_string=open(args.yaml,'r').read()
-        model=model_from_yaml(yaml_string,custom_objects=custom_objects) 
+        model=model_from_yaml(yaml_string)
         #load the model weights
         model.load_weights(args.weights)
         
@@ -184,14 +187,14 @@ def get_model(args):
         from keras.models import model_from_json
         #load the model architecture from json
         json_string=open(args.json,'r').read()
-        model=model_from_json(json_string,custom_objects=custom_objects)
+        model=model_from_json(json_string)
         #pdb.set_trace() 
         model.load_weights(args.weights)
         
     elif args.model_hdf5!=None: 
         #load from the hdf5
         from keras.models import load_model
-        model=load_model(args.model_hdf5,custom_objects=custom_objects)
+        model=load_model(args.model_hdf5)
     print("got model architecture")
     print("loaded model weights")
     print(model.summary())
@@ -208,7 +211,11 @@ def compute_embeddings(args):
     print("loaded model")
     
     #reshape model inputs to take a variable size input
-    new_input_shape=(None,1,args.flank*2,4)
+    if args.expand_dims is True:
+        new_input_shape=(None,1,args.flank*2,4)
+    else:
+        new_input_shape=(None,args.flank*2,4)
+        
     new_model=reshape_model_inputs(model,new_input_shape,args)    
 
     #get the model that returns embedding at user-specified layer

@@ -208,7 +208,7 @@ def compute_interpretation_scores(args):
         if len(processed)==(len_data_generator+1):
             break
         if args.input_grad is True:
-            batch_scores=input_grad(model,X,target_layer_idx=args.interpretation_layer,input_to_use=input_index_to_interpret)
+            batch_scores=input_grad(model,X,target_layer_idx=args.interpretation_layer,input_to_use=args.input_index_to_interpret)
         else:
             batch_scores=deeplift_batch(score_func,X,args.task_index,args.deeplift_num_refs_per_seq,args.deeplift_reference,args.batch_size)
         if scores is None:
