@@ -34,7 +34,7 @@ def parse_args():
     parser.add_argument('--json',help='json file for the model')
     parser.add_argument("--embedding_layer_number",type=int,default=None, help="model layer for which to calculate embedding")
     parser.add_argument("--input_layer_number",type=int,default=None) 
-    parser.add_argument("--embedding_layer_name",type=str,help="name of embedding layer, alternative to embedding_layer_number")
+    parser.add_argument("--embedding_layer_name",type=str,default=None,help="name of embedding layer, alternative to embedding_layer_number")
     parser.add_argument("--input_layer_name",type=str,default=None)
     parser.add_argument('--input_bed_file',required=True,help='bed file with peaks to generate embedding')
     parser.add_argument('--batch_size',type=int,help='batch size to use to compute embeddings',default=1000)
@@ -95,19 +95,19 @@ def get_embeddings(args,model):
     print("got region labels")
     return np.asarray(bed_entries), embeddings
    
-def get_embedding_layer_model(model,embedding_layer_number,embedding_input_number, embedding_layer_name, embedding_input_name):
+def get_embedding_layer_model(model,embedding_layer_number,input_layer_number, embedding_layer_name, input_layer_name):
     '''
     if input_seq_len is provided the model with use the central n base pairs of the input sequence as 
     input to the convolution stack 
     '''
-    if embedding_input_name is not None:
+    if input_layer_name is not None:
         assert embedding_layer_name is not None
-        return Model(inputs=model.get_layer(embedding_input_name).input,
+        return Model(inputs=model.get_layer(input_layer_name).input,
                      outputs=model.get_layer(embedding_layer_name).output)
     else:
-        assert embedding_input_number is not None
+        assert input_layer_number is not None
         assert embedding_layer_number is not None 
-        return Model(inputs=model.layers[embedding_input_number].input,
+        return Model(inputs=model.layers[input_layer_number].input,
                      outputs=model.layers[embedding_layer_number].output)
 
 def add_positional_pooling(model,args):
@@ -146,10 +146,10 @@ def reshape_model_inputs(model,new_input_shape,args):
     if (target_layer.__class__.__name__.startswith("Conv")==False):
         #We only want to change the input shape for a conv layer 
         return model
-    if args.embedding_input_name is not None:
-        model.get_layer(args.embedding_input_name).batch_input_shape=new_input_shape
-    elif args.embedding_input_number is not None:
-        model._layers[args.embedding_input_number].batch_input_shape=new_input_shape
+    if args.input_layer_name is not None:
+        model.get_layer(args.input_layer_name).batch_input_shape=new_input_shape
+    elif args.input_layer_number is not None:
+        model._layers[args.input_layer_number].batch_input_shape=new_input_shape
     else:
         model._layers[0].batch_input_shape = new_input_shape        
     new_model=keras.models.model_from_json(model.to_json())
@@ -219,7 +219,7 @@ def compute_embeddings(args):
     new_model=reshape_model_inputs(model,new_input_shape,args)    
 
     #get the model that returns embedding at user-specified layer
-    embedding_layer_model=get_embedding_layer_model(new_model,args.embedding_layer_number, args.embedding_input_number, args.embedding_layer_name, args.embedding_input_name)
+    embedding_layer_model=get_embedding_layer_model(new_model,args.embedding_layer_number, args.input_layer_number, args.embedding_layer_name, args.input_layer_name)
     print("obtained embedding layer model")
 
     #add a pooling layer to add positional invariance if the requested target embedding layer is a Convolution layer 
