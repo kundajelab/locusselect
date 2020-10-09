@@ -16,7 +16,7 @@ from keras.engine.input_layer import Input
 from keras import callbacks as cbks
 from keras.losses import *
 from keras.models import Model 
-from keras.layers import GlobalAveragePooling2D, AveragePooling2D, Flatten
+from keras.layers import GlobalAveragePooling1D, AveragePooling1D, Flatten
 
 #import dependencies from locusselect 
 from locusselect.generators import *
@@ -124,14 +124,14 @@ def add_positional_pooling(model,args):
         return model
     
     if args.global_pool_on_position==True:
-        pooled_embedding = GlobalAveragePooling2D(data_format="channels_last")(model.output)
+        pooled_embedding = GlobalAveragePooling1D(data_format="channels_last")(model.output)
         flat_embedding=pooled_embedding
     elif args.non_global_pool_on_position_size is not None:
         if args.non_global_pool_on_position_stride is None:
             non_global_pool_on_position_stride=args.non_global_pool_on_position_size
         else:
             non_global_pool_on_position_stride=args.non_global_pool_on_position_stride
-        pooled_embedding = AveragePooling2D(pool_size=args.non_global_pool_on_position_size, strides=args.non_global_pool_on_position_stride, padding="same", data_format="channels_last")(model.output)
+        pooled_embedding = AveragePooling1D(pool_size=args.non_global_pool_on_position_size, strides=args.non_global_pool_on_position_stride, padding="same", data_format="channels_last")(model.output)
         flat_embedding=Flatten()(pooled_embedding)
     #create graph of your new model
     new_model = Model(input = model.input, output = flat_embedding)
