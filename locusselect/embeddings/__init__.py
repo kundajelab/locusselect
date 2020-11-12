@@ -41,7 +41,7 @@ def parse_args():
     parser.add_argument('--ref_fasta')
     parser.add_argument('--flank',default=500,type=int)
     parser.add_argument('--center_on_summit',default=False,action='store_true',help="if this is set to true, the peak will be centered at the summit (must be last entry in bed file) and expanded args.flank to the left and right")
-    parser.add_argument('--center_on_bed_interval',default=False)
+    parser.add_argument('--center_on_bed_interval',default=False,action='store_true')
     parser.add_argument("--output_npz_file",default=None,help="name of output file to store embeddings. The npz file will have fields \"bed_entries\" and \"embeddings\"")
     parser.add_argument("--expand_dims",default=False,action="store_true",help="set to True if using 2D convolutions, Fales if 1D convolutions (default)")
     parser.add_argument("--global_pool_on_position",default=False,action="store_true")
@@ -59,7 +59,8 @@ def get_embeddings(args,model):
                                  center_on_summit=args.center_on_summit,
                                  center_on_bed_interval=args.center_on_bed_interval,
                                  flank=args.flank,
-                                 expand_dims=args.expand_dims)
+                                 expand_dims=args.expand_dims,
+                                 return_indices=False)
     data_length=len(data_generator)*args.batch_size
     done=False
     start_row=0
@@ -74,14 +75,15 @@ def get_embeddings(args,model):
                                         flank=args.flank,
                                         expand_dims=args.expand_dims,
                                         start_row=start_row,
-                                        num_rows=num_rows)
+                                        num_rows=num_rows,
+                                        return_indices=False)
 
         print("created data generator from {}".format(start_row))
-        e=model.predict_generator(data_subgenerator,
-                                  max_queue_size=args.max_queue_size,
-                                  workers=args.threads,
-                                  use_multiprocessing=True,
-                                  verbose=1)
+        e=model.predict(data_subgenerator,
+                        max_queue_size=args.max_queue_size,
+                        workers=args.threads,
+                        use_multiprocessing=True,
+                        verbose=1)
         if(embeddings is None):
             embeddings = e
         else:
@@ -134,7 +136,7 @@ def add_positional_pooling(model,args):
         pooled_embedding = AveragePooling1D(pool_size=args.non_global_pool_on_position_size, strides=args.non_global_pool_on_position_stride, padding="same", data_format="channels_last")(model.output)
         flat_embedding=Flatten()(pooled_embedding)
     #create graph of your new model
-    new_model = Model(input = model.input, output = flat_embedding)
+    new_model = Model(model.input,flat_embedding)
     return new_model
 
 def reshape_model_inputs(model,new_input_shape,args):
@@ -147,11 +149,11 @@ def reshape_model_inputs(model,new_input_shape,args):
         #We only want to change the input shape for a conv layer 
         return model
     if args.input_layer_name is not None:
-        model.get_layer(args.input_layer_name).batch_input_shape=new_input_shape
+        model.get_layer(args.input_layer_name)._batch_input_shape=new_input_shape
     elif args.input_layer_number is not None:
-        model._layers[args.input_layer_number].batch_input_shape=new_input_shape
+        model._layers[args.input_layer_number]._batch_input_shape=new_input_shape
     else:
-        model._layers[0].batch_input_shape = new_input_shape        
+        model._layers[0]._batch_input_shape = new_input_shape        
     new_model=keras.models.model_from_json(model.to_json())
     for layer in new_model.layers:
         try:
@@ -188,7 +190,6 @@ def get_model(args):
         #load the model architecture from json
         json_string=open(args.json,'r').read()
         model=model_from_json(json_string)
-        #pdb.set_trace() 
         model.load_weights(args.weights)
         
     elif args.model_hdf5!=None: 
