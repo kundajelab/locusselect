@@ -217,12 +217,13 @@ def compute_embeddings(args):
     else:
         new_input_shape=(None,args.flank*2,4)
         
-    new_model=reshape_model_inputs(model,new_input_shape,args)    
 
     #get the model that returns embedding at user-specified layer
-    embedding_layer_model=get_embedding_layer_model(new_model,args.embedding_layer_number, args.input_layer_number, args.embedding_layer_name, args.input_layer_name)
+    embedding_layer_model=get_embedding_layer_model(model,args.embedding_layer_number, args.input_layer_number, args.embedding_layer_name, args.input_layer_name)
     print("obtained embedding layer model")
 
+    embedding_layer_model=reshape_model_inputs(embedding_layer_model,new_input_shape,args)    
+    
     #add a pooling layer to add positional invariance if the requested target embedding layer is a Convolution layer 
     pooled_flattened_model=add_positional_pooling(embedding_layer_model,args)
 
